@@ -17,6 +17,10 @@ hihat    = [True,  False, True,  False,
             True,  False, True,  False,
             True,  False, True,  False,
             True,  True,  True,  True]
+chords   = [True,  False, False, False,
+            True,  False, False, False,
+            True,  False, False, False,
+            True,  False, False, False]
 
 ticksperstep = 16
 stepsperbeat = 4
@@ -97,28 +101,40 @@ class Timekeeper:
         self._midi_out.write(self._midi_events)
         self._midi_events = []
 
-    def note_on(self, note, velocity):
+    def note_on(self, channel, note, velocity):
         #print(f"on: {note}, {velocity}, {self._midi_ms}")
-        self._midi_events.append([[0x90, note, velocity], self._midi_ms])
-    def note_off(self, note):
+        self._midi_events.append([[0x90+channel, note, velocity], self._midi_ms])
+    def note_off(self, channel, note):
         #print(f"off: {note}, {self._midi_ms}")
-        self._midi_events.append([[0x80, note, 0], self._midi_ms])
+        self._midi_events.append([[0x80+channel, note, 0], self._midi_ms])
 
 
 class Sequence:
-    def __init__(self, note, seq, out):
-        self.note = note
+    def __init__(self, seq):
         self.seq = seq
-        self.out = out
         self.on = False
 
     def tick(self, time):
         if time.instep == 0 and self.seq[time.step]:
-            self.out.note_on(self.note, 127)
+            self.do_on();
             self.on = True
         elif self.on:
-            self.out.note_off(self.note)
+            self.do_off();
             self.on = False
+
+class DrumSequence(Sequence):
+    def __init__(self, channel, note, seq, out):
+        Sequence.__init__(self, seq)
+        self.channel = channel
+        self.note = note
+        self.out = out
+
+    def do_on(self):
+        self.out.note_on(self.channel, self.note, 127)
+
+    def do_off(self):
+        self.out.note_off(self.channel, self.note)
+
 
 pygame.init()
 pygame.midi.init()
@@ -132,9 +148,9 @@ time = Timekeeper(midi_out)
 
 base = 60
 n = 0
-time.add_listener(Sequence(36, bassdrum, time))
-time.add_listener(Sequence(37, snare,    time))
-time.add_listener(Sequence(42, hihat,    time))
+time.add_listener(DrumSequence(0, 36, bassdrum, time))
+time.add_listener(DrumSequence(0, 37, snare,    time))
+time.add_listener(DrumSequence(0, 42, hihat,    time))
 
 def drawframe(screen, time, seq):
     brightness = (ticksperstep*2) - time.inbeat
