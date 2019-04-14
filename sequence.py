@@ -47,6 +47,7 @@ class Timekeeper:
         self.newframe = True
         self._midi_out = midi_out
         self._midi_ms = pygame.midi.time()
+        self._midi_events = []
         self.listeners = []
 
     def add_listener(self, l):
@@ -90,13 +91,18 @@ class Timekeeper:
             self.tick()
         for l in self.listeners:
             l.tick(self)
+        self._flush()
+
+    def _flush(self):
+        self._midi_out.write(self._midi_events)
+        self._midi_events = []
 
     def note_on(self, note, velocity):
         #print(f"on: {note}, {velocity}, {self._midi_ms}")
-        self._midi_out.write([[[0x90, note, velocity], self._midi_ms]])
+        self._midi_events.append([[0x90, note, velocity], self._midi_ms])
     def note_off(self, note):
         #print(f"off: {note}, {self._midi_ms}")
-        self._midi_out.write([[[0x80, note, 0], self._midi_ms]])
+        self._midi_events.append([[0x80, note, 0], self._midi_ms])
 
 
 class Sequence:
