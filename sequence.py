@@ -23,11 +23,13 @@ stepsperbeat = 4
 beatsperpattern = 4
 beatsperminute = 120
 ticksperbeat = ticksperstep * stepsperbeat
+ticksperminute = ticksperbeat * beatsperminute
 ticksperpattern = ticksperbeat * beatsperpattern
-tickspersecond = (ticksperbeat * beatsperminute) // 60
+tickspersecond = ticksperminute // 60
 
 framespersecond = 30
 ticksperframe = tickspersecond // framespersecond
+mspertick = 60000 // ticksperminute
 
 print(f"ticksperbeat: {ticksperbeat}")
 print(f"tickspersecond: {tickspersecond}")
@@ -35,7 +37,7 @@ print(f"framespersecond: {framespersecond}")
 print(f"ticksperframe: {ticksperframe}")
 
 class Timekeeper:
-    def __init__(self):
+    def __init__(self, midi_out):
         self.n = 0
         self.beat = 0
         self.step = 0
@@ -43,7 +45,12 @@ class Timekeeper:
         self.inbeat = 0
         self.instep = 0
         self.newframe = True
-        self._clock = pygame.time.Clock()
+        self._midi_out = midi_out
+        self._midi_ms = pygame.midi.time()
+        self.listeners = []
+
+    def add_listener(self, l):
+        self.listeners.append(l)
 
     def tick(self):
         self.n += 1
@@ -68,7 +75,28 @@ class Timekeeper:
             self.newframe = True
         else:
             self.newframe = False
-        self._clock.tick(tickspersecond)
+        self._midi_ms += mspertick
+
+    def first_frame(self):
+        for l in self.listeners:
+            l.tick(self)
+        self.to_next_frame()
+
+    def to_next_frame(self):
+        self.tick()
+        while not self.newframe:
+            for l in self.listeners:
+                l.tick(self)
+            self.tick()
+        for l in self.listeners:
+            l.tick(self)
+
+    def note_on(self, note, velocity):
+        #print(f"on: {note}, {velocity}, {self._midi_ms}")
+        self._midi_out.write([[[0x90, note, velocity], self._midi_ms]])
+    def note_off(self, note):
+        #print(f"off: {note}, {self._midi_ms}")
+        self._midi_out.write([[[0x80, note, 0], self._midi_ms]])
 
 
 class Sequence:
@@ -91,16 +119,16 @@ pygame.midi.init()
 
 port = pygame.midi.get_default_output_id()
 
-midi_out = pygame.midi.Output(port, 0)
-
-time = Timekeeper()
+midi_out = pygame.midi.Output(port, latency = 1)
+clock = pygame.time.Clock()
+screen = pygame.display.set_mode([640,480], pygame.RESIZABLE)
+time = Timekeeper(midi_out)
 
 base = 60
 n = 0
-seqs = [Sequence(36, bassdrum, midi_out)
-       ,Sequence(37, snare,    midi_out)
-       ,Sequence(42, hihat,    midi_out)
-       ]
+time.add_listener(Sequence(36, bassdrum, time))
+time.add_listener(Sequence(37, snare,    time))
+time.add_listener(Sequence(42, hihat,    time))
 
 def drawframe(screen, time, seq):
     brightness = (ticksperstep*2) - time.inbeat
@@ -122,19 +150,17 @@ def drawframe(screen, time, seq):
     pygame.display.flip()
 
 try:
-    screen = pygame.display.set_mode([640,480], pygame.RESIZABLE)
+    time.first_frame()
     
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT: sys.exit()
 
-        for s in seqs:
-            s.tick(time)
+        drawframe(screen, time, bassdrum)
 
-        if time.newframe:
-            drawframe(screen, time, bassdrum)
+        time.to_next_frame()
 
-        time.tick()
+        clock.tick(framespersecond)
 finally:
     for i in range(0,127):
         midi_out.note_off(i)
