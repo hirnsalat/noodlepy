@@ -165,6 +165,21 @@ time.add_listener(DrumSequence(0, 37, snare,    time))
 time.add_listener(DrumSequence(0, 42, hihat,    time))
 time.add_listener(ChordSequence(1, 60, chords,    time))
 
+activeseq = bassdrum
+allseqs = [bassdrum, snare, hihat, chords]
+
+def handle_key(event, seq):
+    sc = event.scancode
+    if 38 <= sc <= 45:
+        seq[sc - 38] = not seq[sc - 38]
+    elif 52 <= sc <= 59:
+        seq[sc - 44] = not seq[sc - 44]
+    elif 10 <= sc <= 13:
+        return allseqs[sc-10]
+    else:
+        print(sc)
+    return seq
+
 def drawframe(screen, time, seq):
     brightness = (ticksperstep*2) - time.inbeat
     brightness *= 2
@@ -190,13 +205,15 @@ try:
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT: sys.exit()
+            elif event.type == pygame.KEYDOWN: activeseq = handle_key(event, activeseq)
+            #else: print(event)
 
-        drawframe(screen, time, bassdrum)
+        drawframe(screen, time, activeseq)
 
         time.to_next_frame()
 
         clock.tick(framespersecond)
-        print(clock.get_fps())
+        #print(clock.get_fps())
 finally:
     for i in range(0,127):
         midi_out.note_off(i)
