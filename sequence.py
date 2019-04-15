@@ -4,7 +4,10 @@ import pygame.midi
 import pygame.time
 from pygame.locals import *
 
-fourchords = [[0,4,7],[-1,2,7],[-3,0,4],[-3,0,5]]
+#fourchords = [[0,4,7],[-1,2,7],[-3,0,4],[-3,0,5]]
+#bassnotes = [[0],[-5],[-3],[-7]]
+fourchords = [[-3,0,4],[-5,-1,2],[-7,-3,0],[-8,-4,-1]]
+bassnotes = [[-3],[-5],[-7],[-8]]
 bassdrum = [True,  False, False, False,
             False, False, False, False,
             True,  False, True,  False,
@@ -16,11 +19,18 @@ snare    = [False, False, False, False,
 hihat    = [True,  False, True,  False,
             True,  False, True,  False,
             True,  False, True,  False,
-            True,  True,  True,  True]
+            True,  False, True,  False]
 chords   = [True,  False, False, False,
             True,  False, False, False,
             True,  False, False, False,
             True,  False, False, False]
+bassseq  = [True,  False, True,  False,
+            True,  False, True,  False,
+            True,  False, True,  False,
+            True,  False, True,  False]
+
+ONCOLOR = Color("#f437f5")
+OFFCOLOR = Color("#ffffff")
 
 ticksperstep = 16
 stepsperbeat = 4
@@ -118,7 +128,7 @@ class Sequence:
         if time.instep == 0 and self.seq[time.step]:
             self.do_on(time.bar, time.step);
             self.on = True
-        elif self.on:
+        elif self.on and time.instep == 12:
             self.do_off(time.bar, time.step);
             self.on = False
 
@@ -136,18 +146,19 @@ class DrumSequence(Sequence):
         self.out.note_off(self.channel, self.note)
 
 class ChordSequence(Sequence):
-    def __init__(self, channel, basenote, seq, out):
+    def __init__(self, channel, basenote, notes, seq, out):
         Sequence.__init__(self, seq)
         self.channel = channel
         self.basenote = basenote
+        self.notes = notes
         self.out = out
 
     def do_on(self, bar, step):
-        for note in fourchords[bar % 4]:
+        for note in self.notes[bar % 4]:
             self.out.note_on(self.channel, self.basenote + note, 127)
 
     def do_off(self, bar, step):
-        for note in fourchords[bar % 4]:
+        for note in self.notes[bar % 4]:
             self.out.note_off(self.channel, self.basenote + note)
 
 pygame.init()
@@ -163,10 +174,11 @@ time = Timekeeper(midi_out)
 time.add_listener(DrumSequence(0, 36, bassdrum, time))
 time.add_listener(DrumSequence(0, 37, snare,    time))
 time.add_listener(DrumSequence(0, 42, hihat,    time))
-time.add_listener(ChordSequence(1, 60, chords,    time))
+time.add_listener(ChordSequence(1, 72, fourchords, chords,  time))
+time.add_listener(ChordSequence(2, 48, bassnotes,  bassseq, time))
 
 activeseq = bassdrum
-allseqs = [bassdrum, snare, hihat, chords]
+allseqs = [bassdrum, snare, hihat, chords, bassseq]
 
 def handle_key(event, seq):
     sc = event.scancode
@@ -174,7 +186,7 @@ def handle_key(event, seq):
         seq[sc - 38] = not seq[sc - 38]
     elif 52 <= sc <= 59:
         seq[sc - 44] = not seq[sc - 44]
-    elif 10 <= sc <= 13:
+    elif 10 <= sc < 10 + len(allseqs):
         return allseqs[sc-10]
     else:
         print(sc)
@@ -189,9 +201,9 @@ def drawframe(screen, time, seq):
 
     for i in range(0,16):
         if time.step == i:
-            color = [255,0,0] # TODO make pink
+            color = ONCOLOR # TODO make pink
         else:
-            color = [255,255,255]
+            color = OFFCOLOR
         if seq[i]:
             width = 0
         else:
