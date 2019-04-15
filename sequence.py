@@ -45,7 +45,7 @@ class Timekeeper:
         self.n = 0
         self.beat = 0
         self.step = 0
-        self.measure = 0
+        self.bar = 0
         self.inbeat = 0
         self.instep = 0
         self.newframe = True
@@ -65,7 +65,7 @@ class Timekeeper:
             self.n = 0
             self.beat = 0
             self.step = 0
-            self.measure += 1
+            self.bar += 1
             self.inbeat = 0
             self.instep = 0
         elif self.n % ticksperbeat == 0:
@@ -116,10 +116,10 @@ class Sequence:
 
     def tick(self, time):
         if time.instep == 0 and self.seq[time.step]:
-            self.do_on();
+            self.do_on(time.bar, time.step);
             self.on = True
         elif self.on:
-            self.do_off();
+            self.do_off(time.bar, time.step);
             self.on = False
 
 class DrumSequence(Sequence):
@@ -129,12 +129,26 @@ class DrumSequence(Sequence):
         self.note = note
         self.out = out
 
-    def do_on(self):
+    def do_on(self, bar, step):
         self.out.note_on(self.channel, self.note, 127)
 
-    def do_off(self):
+    def do_off(self, bar, step):
         self.out.note_off(self.channel, self.note)
 
+class ChordSequence(Sequence):
+    def __init__(self, channel, basenote, seq, out):
+        Sequence.__init__(self, seq)
+        self.channel = channel
+        self.basenote = basenote
+        self.out = out
+
+    def do_on(self, bar, step):
+        for note in fourchords[bar % 4]:
+            self.out.note_on(self.channel, self.basenote + note, 127)
+
+    def do_off(self, bar, step):
+        for note in fourchords[bar % 4]:
+            self.out.note_off(self.channel, self.basenote + note)
 
 pygame.init()
 pygame.midi.init()
@@ -146,11 +160,10 @@ clock = pygame.time.Clock()
 screen = pygame.display.set_mode([640,480], pygame.RESIZABLE)
 time = Timekeeper(midi_out)
 
-base = 60
-n = 0
 time.add_listener(DrumSequence(0, 36, bassdrum, time))
 time.add_listener(DrumSequence(0, 37, snare,    time))
 time.add_listener(DrumSequence(0, 42, hihat,    time))
+time.add_listener(ChordSequence(1, 60, chords,    time))
 
 def drawframe(screen, time, seq):
     brightness = (ticksperstep*2) - time.inbeat
@@ -183,6 +196,7 @@ try:
         time.to_next_frame()
 
         clock.tick(framespersecond)
+        print(clock.get_fps())
 finally:
     for i in range(0,127):
         midi_out.note_off(i)
