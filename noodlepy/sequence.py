@@ -9,7 +9,7 @@ class Sequence:
         if time.instep == 0 and self.seq[time.step]:
             self.do_on(time.bar, time.step);
             self.on = True
-        elif self.on and time.instep == 12:
+        elif self.on and time.instep == 12: # TODO gate length should not be hardcoded
             self.do_off(time.bar, time.step);
             self.on = False
 
