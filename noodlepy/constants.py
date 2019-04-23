@@ -6,7 +6,7 @@ OFFCOLOR = Color("#ffffff")
 
 ticksperstep = 16
 stepsperbeat = 4
-beatsperpattern = 4
+beatsperpattern = 2
 beatsperminute = 120
 ticksperbeat = ticksperstep * stepsperbeat
 ticksperminute = ticksperbeat * beatsperminute
