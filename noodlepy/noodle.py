@@ -2,6 +2,7 @@ import sys
 import pygame
 import pygame.midi
 import pygame.time
+import pygame.freetype
 from pygame.locals import *
 
 from timing import Timekeeper
@@ -23,7 +24,13 @@ clock = pygame.time.Clock()
 screen = pygame.display.set_mode([640,480], pygame.RESIZABLE)
 time = Timekeeper(midi_out)
 
-the_row = Row(lambda: NoteClip(0, [36,37,38,42]))
+font = pygame.freetype.SysFont("Anonymous Pro", 32)
+print(font)
+print(font.get_sizes())
+textsurf = font.render("test test uasd", ONCOLOR)
+
+#the_row = Row(lambda: NoteClip(0, [36,37,38,42]))
+the_row = Row(lambda: NoteClip(0, [36,37,38,39]))
 
 time.add_listener(the_row)
 
@@ -43,16 +50,23 @@ def handle_key(event, clip):
         clip.left()
     elif sc == 114:
         clip.right()
+    elif sc == 65:
+        clip.play()
+    elif sc == 95:
+        clip.toggle_start()
+    elif sc == 96:
+        clip.toggle_end()
     # L 113, R 114, U 111, D 116
     else:
         print(sc)
 
-def drawframe(screen, time, clip):
+def drawframe(screen, time, clip, title):
     brightness = (ticksperstep*2) - time.inbeat
     brightness *= 2
     if brightness < 0:
         brightness = 0
     screen.fill([brightness, brightness, brightness])
+    screen.blit(title[0], (16,16))
 
     vis = clip.visual()
 
@@ -60,7 +74,7 @@ def drawframe(screen, time, clip):
         for col in range(0,8):
             # the next two steps should probably go into the clip
             # maybe figure out if active step is in the clip and pass that to visual()?
-            if time.step == col:
+            if time.step == col and clip.visible == clip.playing:
                 color = ONCOLOR # TODO make pink
             else:
                 color = OFFCOLOR
@@ -80,7 +94,8 @@ try:
             elif event.type == pygame.KEYDOWN: handle_key(event, activeclip)
             #else: print(event)
 
-        drawframe(screen, time, activeclip)
+        textsurf = font.render(f"DRUM {activeclip.visible}", ONCOLOR)
+        drawframe(screen, time, activeclip, textsurf)
 
         time.to_next_frame()
 

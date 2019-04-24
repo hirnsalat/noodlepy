@@ -1,8 +1,9 @@
 from pygame import Color
 
-
-ONCOLOR = Color("#f437f5")
-OFFCOLOR = Color("#ffffff")
+PINK = Color("#f437f5")
+WHITE = Color("#ffffff")
+OFFCOLOR = PINK
+ONCOLOR = WHITE
 
 ticksperstep = 16
 stepsperbeat = 4

@@ -15,6 +15,15 @@ class Row:
     def left(self):
         self.visible = (self.visible - 1) % 8
 
+    def play(self):
+        self.next = self.visible
+
+    def toggle_start(self):
+        self.loopstart[self.visible] = not self.loopstart[self.visible]
+
+    def toggle_end(self):
+        self.loopend[self.visible] = not self.loopend[self.visible]
+
     def tick(self, time):
         if time.step == 0 and time.instep == 0:
             if self.next >= 0:
