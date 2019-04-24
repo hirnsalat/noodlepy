@@ -6,7 +6,7 @@ import pygame.freetype
 from pygame.locals import *
 
 from timing import Timekeeper
-from clip import NoteClip, Row
+from clip import NoteClip, Row, Grid
 from constants import *
 
 print(f"ticksperbeat: {ticksperbeat}")
@@ -30,11 +30,15 @@ print(font.get_sizes())
 textsurf = font.render("test test uasd", ONCOLOR)
 
 #the_row = Row(lambda: NoteClip(0, [36,37,38,42]))
-the_row = Row(lambda: NoteClip(0, [36,37,38,39]))
+the_grid = Grid([
+        Row(lambda: NoteClip(0, [36,37,38,39]), NOTPINK),
+        Row(lambda: NoteClip(0, [40,41,42,43]), ALSONOTPINK),
+        Row(lambda: NoteClip(0, [40,41,42,43]), GREEN),
+        Row(lambda: NoteClip(0, [36,37,38,39]), PINK)])
 
-time.add_listener(the_row)
+time.add_listener(the_grid)
 
-activeclip = the_row
+activeclip = the_grid
 
 def handle_key(event, clip):
     sc = event.scancode
@@ -50,12 +54,18 @@ def handle_key(event, clip):
         clip.left()
     elif sc == 114:
         clip.right()
+    elif sc == 111:
+        clip.up()
+    elif sc == 116:
+        clip.down()
     elif sc == 65:
         clip.play()
     elif sc == 95:
         clip.toggle_start()
     elif sc == 96:
         clip.toggle_end()
+    elif sc == 9:
+        clip.zoom()
     # L 113, R 114, U 111, D 116
     else:
         print(sc)
@@ -68,20 +78,15 @@ def drawframe(screen, time, clip, title):
     screen.fill([brightness, brightness, brightness])
     screen.blit(title[0], (16,16))
 
-    vis = clip.visual()
-
     for row in range(0,4):
         for col in range(0,8):
             # the next two steps should probably go into the clip
             # maybe figure out if active step is in the clip and pass that to visual()?
-            if time.step == col and clip.visible == clip.playing:
-                color = ONCOLOR # TODO make pink
-            else:
-                color = OFFCOLOR
-            if vis[row][col]:
+            color, active = clip.visual(row, col, time.step)
+            if active:
                 width = 0
             else:
-                width = 1
+                width = 2
             pygame.draw.rect(screen, color, Rect(8+80*col,168+80*row,64,64), width)
     pygame.display.flip()
 
@@ -94,7 +99,7 @@ try:
             elif event.type == pygame.KEYDOWN: handle_key(event, activeclip)
             #else: print(event)
 
-        textsurf = font.render(f"DRUM {activeclip.visible}", ONCOLOR)
+        textsurf = font.render(f"DRUM XXX", ONCOLOR)
         drawframe(screen, time, activeclip, textsurf)
 
         time.to_next_frame()

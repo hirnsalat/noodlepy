@@ -1,13 +1,68 @@
 from constants import *
 
+class Grid:
+    def __init__(self, rows):
+        self.rows = rows
+        self.activerow = 0
+        self.arrangerview = True
+
+    def up(self):
+        self.activerow = (self.activerow - 1) % len(self.rows)
+
+    def down(self):
+        self.activerow = (self.activerow + 1) % len(self.rows)
+
+    def right(self):
+        for row in self.rows:
+            row.right()
+
+    def left(self):
+        for row in self.rows:
+            row.left()
+
+    def zoom(self):
+        self.arrangerview = not self.arrangerview
+
+    def play(self):
+        self.rows[self.activerow].play()
+
+    def toggle_start(self):
+        self.rows[self.activerow].toggle_start()
+
+    def toggle_end(self):
+        self.rows[self.activerow].toggle_end()
+
+    def tick(self, time):
+        for row in self.rows:
+            row.tick(time)
+
+    def visual(self, row, col, step):
+        if self.arrangerview:
+            color = WHITE
+            if not self.rows[row].playing == col:
+                color = self.rows[row].color
+            return (color, self.activerow == row and self.rows[row].visible == col)
+        else:
+            return self.rows[self.activerow].visual(row, col, step)
+
+    def click(self, row, col):
+        if self.arrangerview:
+            self.activerow = row
+            for r in self.rows:
+                r.visible = col
+        else:
+            return self.rows[self.activerow].click(row, col)
+
+
 class Row:
-    def __init__(self, ClipType):
+    def __init__(self, ClipType, color):
         self.clips = [ClipType() for i in range(0,8)]
         self.playing = 0
         self.visible = 0
         self.next = -1
         self.loopend = [False, True] + [False] * 6
         self.loopstart = [False] * 8
+        self.color = color
 
     def right(self):
         self.visible = (self.visible + 1) % 8
@@ -36,8 +91,14 @@ class Row:
                 self.playing = (self.playing + 1) % 8
         self.clips[self.playing].tick(time)
 
-    def visual(self):
-        return self.clips[self.visible].visual()
+#    def visual(self):
+#        return self.clips[self.visible].visual()
+
+    def visual(self, row, col, step):
+        color = self.color
+        if self.playing == self.visible and step == col:
+            color = WHITE
+        return (color, self.clips[self.visible].visual()[row][col])
 
     def click(self, row, col):
         return self.clips[self.visible].click(row, col)
