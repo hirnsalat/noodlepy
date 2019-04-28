@@ -5,6 +5,7 @@ NOTPINK = Color("#37f5f4")
 ALSONOTPINK = Color("#f5f437")
 GREEN = Color("#00ff00")
 WHITE = Color("#ffffff")
+BLACK = Color("#000000")
 OFFCOLOR = PINK
 ONCOLOR = WHITE
 

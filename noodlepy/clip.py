@@ -1,83 +1,90 @@
 from constants import *
 
 class Grid:
-    def __init__(self, rows):
-        self.rows = rows
-        self.activerow = 0
+    def __init__(self):
+        self.tracks = []
+        self.trackmeta = []
+        self.row = 0
+        self.col = 0
+        self.width = 8 # TODO
         self.arrangerview = True
 
+    def gettitle(self):
+        if self.arrangerview:
+            return ("ARRANGE", WHITE)
+        else:
+            return (f"{self.trackmeta[self.row][0]} {self.col}", self.trackmeta[self.row][1])
+
+    def addtrack(self, name, color, track, hicolor=WHITE, bgcolor=BLACK):
+        self.tracks.append(track)
+        self.trackmeta.append((name, color, hicolor, bgcolor))
+
     def up(self):
-        self.activerow = (self.activerow - 1) % len(self.rows)
+        self.row = (self.row - 1) % len(self.tracks)
 
     def down(self):
-        self.activerow = (self.activerow + 1) % len(self.rows)
+        self.row = (self.row + 1) % len(self.tracks)
 
     def right(self):
-        for row in self.rows:
-            row.right()
+        self.col = (self.col + 1) % self.width
 
     def left(self):
-        for row in self.rows:
-            row.left()
+        self.col = (self.col - 1) % self.width
 
     def zoom(self):
         self.arrangerview = not self.arrangerview
 
     def play(self):
-        self.rows[self.activerow].play()
+        self.track[self.row].prime(self.col)
 
     def toggle_start(self):
-        self.rows[self.activerow].toggle_start()
+        self.tracks[self.row].toggle_start(self.col)
 
     def toggle_end(self):
-        self.rows[self.activerow].toggle_end()
+        self.tracks[self.row].toggle_end(self.col)
 
     def tick(self, time):
-        for row in self.rows:
-            row.tick(time)
+        for track in self.tracks:
+            track.tick(time)
 
     def visual(self, row, col, step):
         if self.arrangerview:
-            color = WHITE
-            if not self.rows[row].playing == col:
-                color = self.rows[row].color
-            return (color, self.activerow == row and self.rows[row].visible == col)
+            if self.tracks[row].playing == col:
+                color = self.trackmeta[row][2]
+            else:
+                color = self.trackmeta[row][1]
+            return (color, self.row == row and self.col == col)
         else:
-            return self.rows[self.activerow].visual(row, col, step)
+            if self.tracks[self.row].playing == self.col and step == col:
+                color = self.trackmeta[self.row][2]
+            else:
+                color = self.trackmeta[self.row][1]
+            return (color, self.tracks[self.row].clips[self.col].isactive(row, col))
 
     def click(self, row, col):
         if self.arrangerview:
-            self.activerow = row
-            for r in self.rows:
-                r.visible = col
+            self.row = row
+            self.col = col
         else:
-            return self.rows[self.activerow].click(row, col)
+            return self.tracks[self.row].clips[self.col].click(row, col)
 
 
-class Row:
-    def __init__(self, ClipType, color):
+class Track:
+    def __init__(self, ClipType):
         self.clips = [ClipType() for i in range(0,8)]
         self.playing = 0
-        self.visible = 0
         self.next = -1
         self.loopend = [False, True] + [False] * 6
         self.loopstart = [False] * 8
-        self.color = color
 
-    def right(self):
-        self.visible = (self.visible + 1) % 8
+    def prime(self, clipind):
+        self.next = clipind
 
-    def left(self):
-        self.visible = (self.visible - 1) % 8
+    def toggle_start(self, clipind):
+        self.loopstart[clipind] = not self.loopstart[clipind]
 
-    def play(self):
-        self.next = self.visible
-
-    def toggle_start(self):
-        self.loopstart[self.visible] = not self.loopstart[self.visible]
-
-    def toggle_end(self):
-        self.loopend[self.visible] = not self.loopend[self.visible]
+    def toggle_end(self, clipind):
+        self.loopend[clipind] = not self.loopend[clipind]
 
     def tick(self, time):
         if time.step == 0 and time.instep == 0:
@@ -91,17 +98,7 @@ class Row:
                 self.playing = (self.playing + 1) % 8
         self.clips[self.playing].tick(time)
 
-#    def visual(self):
-#        return self.clips[self.visible].visual()
 
-    def visual(self, row, col, step):
-        color = self.color
-        if self.playing == self.visible and step == col:
-            color = WHITE
-        return (color, self.clips[self.visible].visual()[row][col])
-
-    def click(self, row, col):
-        return self.clips[self.visible].click(row, col)
 
 class Clip:
     def __init__(self):
@@ -139,8 +136,8 @@ class NoteClip(Clip):
     def click(self, row, col):
         self.seqs[row][col] = not self.seqs[row][col]
 
-    def visual(self):
-        return self.seqs
+    def isactive(self, row, col):
+        return self.seqs[row][col]
 
 """
 # chord thing will be more complicated, some 4 row thing

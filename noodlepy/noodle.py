@@ -6,9 +6,8 @@ import pygame.freetype
 from pygame.locals import *
 
 from timing import Timekeeper
-from clip import NoteClip, Row, Grid
 from constants import *
-from conf import the_grid
+import conf
 
 print(f"ticksperbeat: {ticksperbeat}")
 print(f"tickspersecond: {tickspersecond}")
@@ -30,6 +29,7 @@ print(font)
 print(font.get_sizes())
 textsurf = font.render("test test uasd", ONCOLOR)
 
+the_grid = conf.get_grid()
 time.add_listener(the_grid)
 
 activeclip = the_grid
@@ -93,7 +93,7 @@ try:
             elif event.type == pygame.KEYDOWN: handle_key(event, activeclip)
             #else: print(event)
 
-        textsurf = font.render(f"DRUM XXX", ONCOLOR)
+        textsurf = font.render(*the_grid.gettitle())
         drawframe(screen, time, activeclip, textsurf)
 
         time.to_next_frame()
