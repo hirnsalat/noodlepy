@@ -8,6 +8,7 @@ from pygame.locals import *
 from timing import Timekeeper
 from clip import NoteClip, Row, Grid
 from constants import *
+from conf import the_grid
 
 print(f"ticksperbeat: {ticksperbeat}")
 print(f"tickspersecond: {tickspersecond}")
@@ -28,12 +29,6 @@ font = pygame.freetype.SysFont("Anonymous Pro", 32)
 print(font)
 print(font.get_sizes())
 textsurf = font.render("test test uasd", ONCOLOR)
-
-the_grid = Grid([
-        Row(lambda: NoteClip(0, [36,37,38,39]), GREEN),
-        Row(lambda: NoteClip(0, [40,41,42,43]), ALSONOTPINK),
-        Row(lambda: NoteClip(2, [45,48,52,57]), NOTPINK),
-        Row(lambda: NoteClip(0, [36,37,38,39]), PINK)])
 
 time.add_listener(the_grid)
 
