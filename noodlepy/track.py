@@ -5,7 +5,7 @@ class Track:
         self.clips = [ClipType() for i in range(0,8)]
         self.playing = 0
         self.next = -1
-        self.loopend = [False, True] + [False] * 6
+        self.loopend = [False] * 8
         self.loopstart = [False] * 8
 
     def prime(self, clipind):
@@ -22,7 +22,7 @@ class Track:
             if self.next >= 0:
                 self.playing = self.next
                 self.next = -1
-            elif self.loopend[self.playing]:
+            elif self.loopend[self.playing] or self.playing == 7:
                 while self.playing > 0 and not self.loopstart[self.playing]:
                     self.playing -= 1
             else:

@@ -11,9 +11,14 @@ class Grid:
 
     def gettitle(self):
         if self.arrangerview:
-            return ("ARRANGE", WHITE)
+            return ("ARRANGEMENT", WHITE)
         else:
-            return (f"{self.trackmeta[self.row][0]} {self.col}", self.trackmeta[self.row][1])
+            startchar = endchar = " "
+            if self.tracks[self.row].loopstart[self.col] or self.col == 0:
+                startchar = "["
+            if self.tracks[self.row].loopend[self.col] or self.col == 7:
+                endchar = "]"
+            return (f"{self.trackmeta[self.row][0]} {self.col}       {startchar} {endchar}", self.trackmeta[self.row][1])
 
     def addtrack(self, name, color, track, hicolor=WHITE, bgcolor=BLACK):
         self.tracks.append(track)
@@ -35,7 +40,7 @@ class Grid:
         self.arrangerview = not self.arrangerview
 
     def play(self):
-        self.track[self.row].prime(self.col)
+        self.tracks[self.row].prime(self.col)
 
     def toggle_start(self):
         self.tracks[self.row].toggle_start(self.col)
@@ -48,23 +53,35 @@ class Grid:
             track.tick(time)
 
     def visual(self, row, col, step):
+        flags = 0
         if self.arrangerview:
+            active = self.tracks[row].next == col
             if self.tracks[row].playing == col:
                 color = self.trackmeta[row][2]
             else:
                 color = self.trackmeta[row][1]
-            return (color, self.row == row and self.col == col)
+            bgcolor = self.trackmeta[row][3]
+            if self.tracks[row].loopstart[col] or col == 0:
+                flags = flags | 2
+            if self.tracks[row].loopend[col] or col == 7:
+                flags = flags | 1
         else:
+            active = self.tracks[self.row].clips[self.col].isactive(row, col)
             if self.tracks[self.row].playing == self.col and step == col:
                 color = self.trackmeta[self.row][2]
             else:
                 color = self.trackmeta[self.row][1]
-            return (color, self.tracks[self.row].clips[self.col].isactive(row, col))
+            bgcolor = self.trackmeta[row][3]
+        return active, color, bgcolor, flags
 
-    def click(self, row, col):
+    def click(self, row, col, shift = False):
         if self.arrangerview:
             self.row = row
             self.col = col
+            if not shift:
+                self.play()
+            else:
+                self.zoom()
         else:
             return self.tracks[self.row].clips[self.col].click(row, col)
 
