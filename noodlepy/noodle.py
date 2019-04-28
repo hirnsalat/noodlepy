@@ -29,11 +29,10 @@ print(font)
 print(font.get_sizes())
 textsurf = font.render("test test uasd", ONCOLOR)
 
-#the_row = Row(lambda: NoteClip(0, [36,37,38,42]))
 the_grid = Grid([
-        Row(lambda: NoteClip(0, [36,37,38,39]), NOTPINK),
+        Row(lambda: NoteClip(0, [36,37,38,39]), GREEN),
         Row(lambda: NoteClip(0, [40,41,42,43]), ALSONOTPINK),
-        Row(lambda: NoteClip(0, [40,41,42,43]), GREEN),
+        Row(lambda: NoteClip(2, [45,48,52,57]), NOTPINK),
         Row(lambda: NoteClip(0, [36,37,38,39]), PINK)])
 
 time.add_listener(the_grid)
