@@ -63,7 +63,7 @@ class ChordState:
 
     def _update(self):
         self.bassnotes[0] = self.getscalenote(0) - 24
-        self.bassnotes[1] = self.getscalenote(4)
+        self.bassnotes[1] = self.getscalenote(4) - 24
         if self.bassnotes[1] < self.bassnotes[0]:
             self.bassnotes[1] += 12
         self.bassnotes[2] = self.bassnotes[0] + 12
@@ -102,10 +102,12 @@ class ChordClip(Clip):
         if time.step == 0 and time.instep == 0:
             self.chord.setdegree(self.degree)
 
-        if time.instep == 0 and self.steps[time.step]:
+        if time.instep == 0 and self.steps[time.step] and not self.on:
+            self.on = True
             for i in self.notes:
                 time.note_on(self.channel, i, 127)
         elif time.instep == 12 and self.on and not self.steps[time.step +1]:
+            self.on = False
             for i in self.notes:
                 time.note_off(self.channel, i)
 
