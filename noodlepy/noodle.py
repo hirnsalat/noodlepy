@@ -69,7 +69,6 @@ def handle_key(event, clip):
 
 def drawframe(screen, time, clip, title):
     brightness = (ticksperstep*2) - time.inbeat
-    brightness *= 2
     if brightness < 0:
         brightness = 0
     screen.fill([brightness, brightness, brightness])
