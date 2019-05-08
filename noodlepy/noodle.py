@@ -25,6 +25,11 @@ screen = pygame.display.set_mode([640,480], pygame.RESIZABLE)
 print(screen.get_flags())
 time = Timekeeper(midi_out)
 
+midi_out.set_instrument(0, 0)
+midi_out.set_instrument(1, 1)
+midi_out.set_instrument(2, 2)
+midi_out.set_instrument(3, 10)
+
 font = pygame.freetype.SysFont("Anonymous Pro", 64)
 print(font)
 print(font.get_sizes())
@@ -68,7 +73,7 @@ def handle_key(event, clip):
         print(sc)
 
 def drawframe(screen, time, clip, title):
-    brightness = (ticksperstep*2) - time.inbeat
+    brightness = 0#((ticksperstep*2) - time.inbeat)
     if brightness < 0:
         brightness = 0
     screen.fill([brightness, brightness, brightness])

@@ -27,7 +27,7 @@ class NoteClip(Clip):
         if time.instep == 0:
             for i in range(0,4):
                 if self.seqs[i][time.step]:
-                    time.note_on(self.channel, self.notes[3-i], 127)
+                    time.note_on(self.channel, self.notes[3-i], 64)
         elif time.instep == 12:
             for i in range(0,4):
                 if self.seqs[i][time.step]:
@@ -62,8 +62,8 @@ class ChordState:
         return self.base + ret
 
     def _update(self):
-        self.bassnotes[0] = self.getscalenote(0) - 24
-        self.bassnotes[1] = self.getscalenote(4) - 24
+        self.bassnotes[0] = self.getscalenote(0) - 36
+        self.bassnotes[1] = self.getscalenote(4) - 36
         if self.bassnotes[1] < self.bassnotes[0]:
             self.bassnotes[1] += 12
         self.bassnotes[2] = self.bassnotes[0] + 12
@@ -73,6 +73,9 @@ class ChordState:
         self.chordnotes[2] = self.getscalenote(4)
         self.chordnotes.sort()
         self.leadnotes[:3] = self.chordnotes
+        self.leadnotes[0] = self.leadnotes[0] + 12
+        self.leadnotes[1] = self.leadnotes[1] + 12
+        self.leadnotes[2] = self.leadnotes[2] + 12
         self.leadnotes[3] = self.leadnotes[0] + 12
 
     def setdegree(self, i):
